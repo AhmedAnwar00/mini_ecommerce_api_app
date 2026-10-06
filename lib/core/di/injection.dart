@@ -1,0 +1,89 @@
+import 'package:dio/dio.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:get_it/get_it.dart';
+import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:mini_ecommerce_app_prompt/core/network/auth_interceptor.dart';
+import 'package:mini_ecommerce_app_prompt/core/network/dio_client.dart';
+import 'package:mini_ecommerce_app_prompt/core/network/unauthorized_notifier.dart';
+import 'package:mini_ecommerce_app_prompt/core/router/app_router.dart';
+import 'package:mini_ecommerce_app_prompt/core/storage/key_value_store.dart';
+import 'package:mini_ecommerce_app_prompt/core/storage/preferences_key_value_store.dart';
+import 'package:mini_ecommerce_app_prompt/core/storage/secure_token_storage.dart';
+import 'package:mini_ecommerce_app_prompt/core/storage/token_storage.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_api.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_repository.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/data/dio_auth_api.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/login_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/session_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_repository.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/viewmodel/cart_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/data/checkout_api.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/data/coupon_api.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/data/dio_checkout_api.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/data/dio_coupon_api.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/domain/calculate_checkout.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/domain/checkout_policy.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/viewmodel/checkout_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/data/dio_products_api.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/data/products_api.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/viewmodel/product_details_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/viewmodel/products_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/profile/data/dio_profile_api.dart';
+import 'package:mini_ecommerce_app_prompt/features/profile/data/profile_api.dart';
+import 'package:mini_ecommerce_app_prompt/features/profile/viewmodel/profile_bloc.dart';
+
+final getIt = GetIt.instance;
+
+Future<void> configureDependencies() async {
+  final preferences = await SharedPreferences.getInstance();
+  getIt
+    ..registerSingleton<SharedPreferences>(preferences)
+    ..registerLazySingleton<KeyValueStore>(
+      () => PreferencesKeyValueStore(getIt()),
+    )
+    ..registerLazySingleton<FlutterSecureStorage>(FlutterSecureStorage.new)
+    ..registerLazySingleton<TokenStorage>(() => SecureTokenStorage(getIt()))
+    ..registerLazySingleton(UnauthorizedNotifier.new)
+    ..registerLazySingleton(() => AuthInterceptor(getIt(), getIt()))
+    ..registerLazySingleton<Dio>(
+      () => createDio(baseUrl: apiBaseUrl, authInterceptor: getIt()),
+    )
+    ..registerLazySingleton<AuthApi>(() => DioAuthApi(getIt()))
+    ..registerLazySingleton<ProductsApi>(() => DioProductsApi(getIt()))
+    ..registerLazySingleton<CouponApi>(() => DioCouponApi(getIt()))
+    ..registerLazySingleton<CheckoutApi>(() => DioCheckoutApi(getIt()))
+    ..registerLazySingleton<ProfileApi>(() => DioProfileApi(getIt()))
+    ..registerLazySingleton(() => AuthRepository(getIt(), getIt()))
+    ..registerLazySingleton(() => CartRepository(getIt()))
+    ..registerLazySingleton(CalculateCheckout.new)
+    ..registerLazySingleton(() => CheckoutPolicy.standard)
+    ..registerLazySingleton(
+      () => SessionBloc(
+        authRepository: getIt(),
+        profileApi: getIt(),
+        unauthorizedNotifier: getIt(),
+      ),
+    )
+    ..registerLazySingleton(
+      () => CartBloc(repository: getIt(), sessionBloc: getIt()),
+    )
+    ..registerLazySingleton<GoRouter>(() => buildRouter(getIt))
+    ..registerFactory(() => LoginBloc(getIt()))
+    ..registerFactory(() => ProductsBloc(getIt()))
+    ..registerFactoryParam<ProductDetailsBloc, String, String>(
+      (productId, _) => ProductDetailsBloc(getIt<ProductsApi>(), productId),
+    )
+    ..registerFactory(
+      () => CheckoutBloc(
+        cartRepository: getIt(),
+        couponApi: getIt(),
+        checkoutApi: getIt(),
+        sessionBloc: getIt(),
+        calculateCheckout: getIt(),
+        policy: getIt(),
+      ),
+    )
+    ..registerFactory(() => ProfileBloc(getIt()));
+}
