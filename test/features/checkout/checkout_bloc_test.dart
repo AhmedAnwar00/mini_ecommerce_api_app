@@ -1,12 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:mini_ecommerce_app_prompt/core/error/app_failure.dart';
-import 'package:mini_ecommerce_app_prompt/core/network/unauthorized_notifier.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_repository.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/model/user.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/session_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/session_event.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/session_state.dart';
+import 'package:mini_ecommerce_app_prompt/core/storage/key_value_store.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_repository.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/model/cart.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/model/cart_line.dart';
@@ -18,56 +13,35 @@ import 'package:mini_ecommerce_app_prompt/features/checkout/domain/coupon.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/domain/money.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/model/order.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/viewmodel/checkout_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/profile/data/profile_api.dart';
-import 'package:mini_ecommerce_app_prompt/core/storage/key_value_store.dart';
-import 'package:mini_ecommerce_app_prompt/core/storage/token_storage.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_api.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/model/auth_session.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/model/login_request.dart';
 
 void main() {
+  const policy = CheckoutPolicy(
+    minimumOrder: Money.zero,
+    vatBasisPoints: 0,
+    flatShipping: Money.zero,
+    freeShippingThreshold: Money.zero,
+  );
+  const mug = CartLine(
+    productId: 'p1',
+    name: 'Mug',
+    priceMinor: 10000,
+    quantity: 1,
+  );
+
   test('an unknown coupon is omitted from the quote', () async {
-    final store = _MemoryStore();
-    final repository = CartRepository(store);
-    const user = User(
-      id: 'u1',
-      name: 'Ada',
-      email: 'ada@shop.test',
-      membershipBasisPoints: 0,
-    );
-    final session = SessionBloc(
-      authRepository: AuthRepository(_UnusedAuthApi(), _MemoryTokens()),
-      profileApi: _UnusedProfileApi(),
-      unauthorizedNotifier: UnauthorizedNotifier(),
-    );
-    session.add(const SessionSignedIn(user));
-    await session.stream.firstWhere((state) => state is SessionAuthenticated);
+    final repository = CartRepository(_MemoryStore());
     await repository.write(
-      const Cart(
-        lines: [
-          CartLine(
-            productId: 'p1',
-            name: 'Mug',
-            priceMinor: 10000,
-            quantity: 1,
-          ),
-        ],
-        couponCode: 'NOPE',
-      ),
-      userId: user.id,
+      const Cart(lines: [mug], couponCode: 'NOPE'),
+      userId: 'u1',
     );
     final bloc = CheckoutBloc(
       cartRepository: repository,
       couponApi: _RejectingCouponApi(),
       checkoutApi: _UnusedCheckoutApi(),
-      sessionBloc: session,
       calculateCheckout: const CalculateCheckout(),
-      policy: const CheckoutPolicy(
-        minimumOrder: Money.zero,
-        vatBasisPoints: 0,
-        flatShipping: Money.zero,
-        freeShippingThreshold: Money.zero,
-      ),
+      policy: policy,
+      ownerId: 'u1',
+      membershipBasisPoints: 0,
     );
 
     bloc.add(const CheckoutRequested());
@@ -82,7 +56,43 @@ void main() {
     expect(draft.couponMessage, 'Coupon is not valid.');
 
     await bloc.close();
-    await session.close();
+  });
+
+  test('a placed order clears only that user cart', () async {
+    final repository = CartRepository(_MemoryStore());
+    await repository.write(const Cart(lines: [mug]), userId: 'u1');
+    await repository.write(const Cart(lines: [mug]), userId: 'u2');
+    final bloc = CheckoutBloc(
+      cartRepository: repository,
+      couponApi: _UnusedCouponApi(),
+      checkoutApi: _FixedCheckoutApi(),
+      calculateCheckout: const CalculateCheckout(),
+      policy: policy,
+      ownerId: 'u1',
+      membershipBasisPoints: 1000,
+    );
+
+    bloc.add(const CheckoutRequested());
+    final ready = await bloc.stream.firstWhere(
+      (state) => state is CheckoutReady,
+    );
+    expect(
+      (ready as CheckoutReady).draft.quote.membershipDiscount,
+      const Money(1000),
+    );
+
+    bloc.add(const CheckoutSubmitted());
+    final success = await bloc.stream.firstWhere(
+      (state) => state is CheckoutSuccess,
+    );
+
+    expect(success, isA<CheckoutSuccess>());
+    expect((await repository.read(userId: 'u1')).lines, isEmpty);
+    final otherCart = await repository.read(userId: 'u2');
+    expect(otherCart.lines.single.productId, mug.productId);
+    expect(otherCart.lines.single.quantity, mug.quantity);
+
+    await bloc.close();
   });
 }
 
@@ -99,35 +109,27 @@ class _MemoryStore implements KeyValueStore {
   Future<void> write(String key, String value) async => values[key] = value;
 }
 
-class _MemoryTokens implements TokenStorage {
-  @override
-  Future<void> clear() async {}
-
-  @override
-  Future<String?> read() async => null;
-
-  @override
-  Future<void> write(String token) async {}
-}
-
-class _UnusedAuthApi implements AuthApi {
-  @override
-  Future<AuthSession> login(LoginRequest request) {
-    throw UnimplementedError();
-  }
-}
-
-class _UnusedProfileApi implements ProfileApi {
-  @override
-  Future<User> me() {
-    throw UnimplementedError();
-  }
-}
-
 class _RejectingCouponApi implements CouponApi {
   @override
   Future<Coupon> validate(String code) {
     throw const AppFailure(AppFailureKind.validation, 'Coupon is not valid.');
+  }
+}
+
+class _UnusedCouponApi implements CouponApi {
+  @override
+  Future<Coupon> validate(String code) {
+    throw UnimplementedError();
+  }
+}
+
+class _FixedCheckoutApi implements CheckoutApi {
+  @override
+  Future<Order> placeOrder({
+    required List<CartLine> lines,
+    required String? couponCode,
+  }) async {
+    return const Order(id: 'order-1', totalMinor: 9000);
   }
 }
 

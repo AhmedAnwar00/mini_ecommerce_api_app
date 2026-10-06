@@ -38,21 +38,31 @@ class GoRouterRefreshStream extends ChangeNotifier {
 
 GoRouter buildRouter(GetIt locator) {
   final session = locator<SessionBloc>();
+  SessionState? previous;
+  var pendingProductsRedirect = false;
   return GoRouter(
     initialLocation: '/',
     refreshListenable: GoRouterRefreshStream(session.stream),
     redirect: (context, state) {
       final sessionState = session.state;
       final location = state.matchedLocation;
+      if (sessionState is SessionAuthenticated) {
+        pendingProductsRedirect = false;
+      } else if (sessionState is SessionUnauthenticated &&
+          sessionState.signedOut &&
+          previous is! SessionUnauthenticated) {
+        pendingProductsRedirect = true;
+      }
+      previous = sessionState;
       if (sessionState is SessionLoading) {
         return location == '/' ? null : '/';
       }
-      final authed = sessionState is SessionAuthenticated;
-      if (!authed && session.shouldOpenProductsAfterLogout) {
+      if (pendingProductsRedirect) {
         if (location != '/products') return '/products';
-        session.clearOpenProductsAfterLogout();
+        pendingProductsRedirect = false;
         return null;
       }
+      final authed = sessionState is SessionAuthenticated;
       if (location == '/') return '/products';
       if (!authed && _isProtected(location)) {
         return '/login?from=${Uri.encodeComponent(location)}';

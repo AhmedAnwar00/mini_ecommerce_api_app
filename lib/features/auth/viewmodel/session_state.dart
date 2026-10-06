@@ -9,9 +9,10 @@ class SessionLoading extends SessionState {
 }
 
 class SessionUnauthenticated extends SessionState {
-  const SessionUnauthenticated({this.message});
+  const SessionUnauthenticated({this.message, this.signedOut = false});
 
   final String? message;
+  final bool signedOut;
 }
 
 class SessionAuthenticated extends SessionState {

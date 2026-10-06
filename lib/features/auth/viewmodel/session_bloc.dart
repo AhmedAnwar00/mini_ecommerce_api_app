@@ -27,13 +27,6 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
   final AuthRepository authRepository;
   final ProfileApi profileApi;
   late final StreamSubscription<void> _subscription;
-  bool _openProductsAfterLogout = false;
-
-  bool get shouldOpenProductsAfterLogout => _openProductsAfterLogout;
-
-  void clearOpenProductsAfterLogout() {
-    _openProductsAfterLogout = false;
-  }
 
   Future<void> _onStarted(
     SessionStarted event,
@@ -81,13 +74,13 @@ class SessionBloc extends Bloc<SessionEvent, SessionState> {
     SessionSignedOut event,
     Emitter<SessionState> emit,
   ) async {
-    _openProductsAfterLogout = true;
     try {
       await authRepository.clearSession();
     } on Object {
-      _openProductsAfterLogout = true;
+      emit(const SessionUnauthenticated(signedOut: true));
+      return;
     }
-    emit(const SessionUnauthenticated());
+    emit(const SessionUnauthenticated(signedOut: true));
   }
 
   void _onExpired(SessionExpired event, Emitter<SessionState> emit) {

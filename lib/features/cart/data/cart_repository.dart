@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:mini_ecommerce_app_prompt/core/storage/key_value_store.dart';
@@ -7,6 +8,9 @@ class CartRepository {
   CartRepository(this._store);
 
   final KeyValueStore _store;
+  final _updates = StreamController<void>.broadcast();
+
+  Stream<void> get updates => _updates.stream;
 
   static const guestKey = 'cart_guest';
 
@@ -35,9 +39,11 @@ class CartRepository {
     );
     if (stored.lines.isEmpty && stored.couponCode == null) {
       await _store.delete(key);
+      _publish();
       return;
     }
     await _store.write(key, jsonEncode(stored.toJson()));
+    _publish();
   }
 
   Future<Cart> mergeGuestIntoUser(String userId) async {
@@ -68,4 +74,9 @@ class CartRepository {
   }
 
   String _key(String? userId) => userId == null ? guestKey : userKey(userId);
+
+  void _publish() {
+    if (_updates.isClosed) return;
+    _updates.add(null);
+  }
 }

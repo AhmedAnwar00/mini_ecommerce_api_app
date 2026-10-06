@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +16,7 @@ import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_repository.dar
 import 'package:mini_ecommerce_app_prompt/features/auth/data/dio_auth_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/login_bloc.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/session_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/session_state.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_repository.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/viewmodel/cart_bloc.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/checkout_api.dart';
@@ -38,25 +38,23 @@ final getIt = GetIt.instance;
 
 Future<void> configureDependencies() async {
   final preferences = await SharedPreferences.getInstance();
+  final tokenStorage = SecureTokenStorage(const FlutterSecureStorage());
+  final unauthorizedNotifier = UnauthorizedNotifier();
+  final dio = createDio(
+    baseUrl: apiBaseUrl,
+    authInterceptor: AuthInterceptor(tokenStorage, unauthorizedNotifier),
+  );
   getIt
-    ..registerSingleton<SharedPreferences>(preferences)
-    ..registerLazySingleton<KeyValueStore>(
-      () => PreferencesKeyValueStore(getIt()),
-    )
-    ..registerLazySingleton<FlutterSecureStorage>(FlutterSecureStorage.new)
-    ..registerLazySingleton<TokenStorage>(() => SecureTokenStorage(getIt()))
-    ..registerLazySingleton(UnauthorizedNotifier.new)
-    ..registerLazySingleton(() => AuthInterceptor(getIt(), getIt()))
-    ..registerLazySingleton<Dio>(
-      () => createDio(baseUrl: apiBaseUrl, authInterceptor: getIt()),
-    )
-    ..registerLazySingleton<AuthApi>(() => DioAuthApi(getIt()))
-    ..registerLazySingleton<ProductsApi>(() => DioProductsApi(getIt()))
-    ..registerLazySingleton<CouponApi>(() => DioCouponApi(getIt()))
-    ..registerLazySingleton<CheckoutApi>(() => DioCheckoutApi(getIt()))
-    ..registerLazySingleton<ProfileApi>(() => DioProfileApi(getIt()))
-    ..registerLazySingleton(() => AuthRepository(getIt(), getIt()))
-    ..registerLazySingleton(() => CartRepository(getIt()))
+    ..registerSingleton<KeyValueStore>(PreferencesKeyValueStore(preferences))
+    ..registerSingleton<TokenStorage>(tokenStorage)
+    ..registerSingleton<UnauthorizedNotifier>(unauthorizedNotifier)
+    ..registerSingleton<AuthApi>(DioAuthApi(dio))
+    ..registerSingleton<ProductsApi>(DioProductsApi(dio))
+    ..registerSingleton<CouponApi>(DioCouponApi(dio))
+    ..registerSingleton<CheckoutApi>(DioCheckoutApi(dio))
+    ..registerSingleton<ProfileApi>(DioProfileApi(dio))
+    ..registerSingleton(AuthRepository(getIt(), getIt()))
+    ..registerSingleton(CartRepository(getIt()))
     ..registerLazySingleton(CalculateCheckout.new)
     ..registerLazySingleton(() => CheckoutPolicy.standard)
     ..registerLazySingleton(
@@ -75,15 +73,18 @@ Future<void> configureDependencies() async {
     ..registerFactoryParam<ProductDetailsBloc, String, String>(
       (productId, _) => ProductDetailsBloc(getIt<ProductsApi>(), productId),
     )
-    ..registerFactory(
-      () => CheckoutBloc(
+    ..registerFactory(() {
+      final session = getIt<SessionBloc>().state;
+      final user = session is SessionAuthenticated ? session.user : null;
+      return CheckoutBloc(
         cartRepository: getIt(),
         couponApi: getIt(),
         checkoutApi: getIt(),
-        sessionBloc: getIt(),
         calculateCheckout: getIt(),
         policy: getIt(),
-      ),
-    )
+        ownerId: user?.id,
+        membershipBasisPoints: user?.membershipBasisPoints ?? 0,
+      );
+    })
     ..registerFactory(() => ProfileBloc(getIt()));
 }

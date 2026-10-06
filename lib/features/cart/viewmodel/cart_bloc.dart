@@ -53,8 +53,8 @@ class CartCouponSaved extends CartEvent {
   final String code;
 }
 
-class CartCheckedOut extends CartEvent {
-  const CartCheckedOut();
+class CartReloaded extends CartEvent {
+  const CartReloaded();
 }
 
 sealed class CartState {
@@ -93,15 +93,19 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     on<CartQuantityDecreased>(_onQuantityDecreased);
     on<CartLineRemoved>(_onLineRemoved);
     on<CartCouponSaved>(_onCouponSaved);
-    on<CartCheckedOut>(_onCheckedOut);
+    on<CartReloaded>(_onReloaded);
     _subscription = sessionBloc.stream.listen((session) {
       add(CartSessionChanged(session));
+    });
+    _updates = repository.updates.listen((_) {
+      add(const CartReloaded());
     });
   }
 
   final CartRepository repository;
   final SessionBloc sessionBloc;
   late final StreamSubscription<SessionState> _subscription;
+  late final StreamSubscription<void> _updates;
 
   Future<void> _onStarted(CartStarted event, Emitter<CartState> emit) {
     return _applySession(sessionBloc.state, emit);
@@ -231,11 +235,13 @@ class CartBloc extends Bloc<CartEvent, CartState> {
     );
   }
 
-  Future<void> _onCheckedOut(
-    CartCheckedOut event,
-    Emitter<CartState> emit,
-  ) async {
-    await _persist(Cart.empty, emit);
+  Future<void> _onReloaded(CartReloaded event, Emitter<CartState> emit) {
+    final session = sessionBloc.state;
+    if (session is SessionLoading) {
+      emit(const CartLoading());
+      return Future<void>.value();
+    }
+    return _load(_ownerId(session), emit);
   }
 
   Future<Cart?> _editableCart() async {
@@ -280,6 +286,7 @@ class CartBloc extends Bloc<CartEvent, CartState> {
   @override
   Future<void> close() async {
     await _subscription.cancel();
+    await _updates.cancel();
     return super.close();
   }
 }

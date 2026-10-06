@@ -1,9 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:mini_ecommerce_app_prompt/core/error/app_failure.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/session_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/session_state.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_repository.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/model/cart.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/checkout_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/coupon_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/domain/calculate_checkout.dart';
@@ -75,9 +74,10 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     required this.cartRepository,
     required this.couponApi,
     required this.checkoutApi,
-    required this.sessionBloc,
     required this.calculateCheckout,
     required this.policy,
+    required this.ownerId,
+    required this.membershipBasisPoints,
   }) : super(const CheckoutLoading()) {
     on<CheckoutRequested>(_onRequested);
     on<CheckoutSubmitted>(_onSubmitted);
@@ -86,9 +86,10 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
   final CartRepository cartRepository;
   final CouponApi couponApi;
   final CheckoutApi checkoutApi;
-  final SessionBloc sessionBloc;
   final CalculateCheckout calculateCheckout;
   final CheckoutPolicy policy;
+  final String? ownerId;
+  final int membershipBasisPoints;
 
   Future<void> _onRequested(
     CheckoutRequested event,
@@ -96,7 +97,7 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
   ) async {
     emit(const CheckoutLoading());
     try {
-      final cart = await cartRepository.read(userId: _ownerId());
+      final cart = await cartRepository.read(userId: ownerId);
       if (cart.lines.isEmpty) {
         emit(const CheckoutEmptyCart());
         return;
@@ -123,7 +124,7 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
         ],
         policy: policy,
         coupon: coupon,
-        membershipBasisPoints: _membershipBasisPoints(),
+        membershipBasisPoints: membershipBasisPoints,
       );
       emit(
         CheckoutReady(
@@ -158,6 +159,7 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
         lines: draft.cart.lines,
         couponCode: draft.appliedCouponCode,
       );
+      await cartRepository.write(Cart.empty, userId: ownerId);
       emit(
         CheckoutSuccess(
           order: order,
@@ -167,19 +169,5 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     } on AppFailure catch (failure) {
       emit(CheckoutSubmitFailure(draft: draft, message: failure.message));
     }
-  }
-
-  String? _ownerId() {
-    final session = sessionBloc.state;
-    if (session is SessionAuthenticated) return session.user?.id;
-    return null;
-  }
-
-  int _membershipBasisPoints() {
-    final session = sessionBloc.state;
-    if (session is SessionAuthenticated) {
-      return session.user?.membershipBasisPoints ?? 0;
-    }
-    return 0;
   }
 }
