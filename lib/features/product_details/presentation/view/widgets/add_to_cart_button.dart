@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/data/product.dart';
 
 class AddToCartButton extends StatelessWidget {
@@ -13,7 +13,7 @@ class AddToCartButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return FilledButton(
       onPressed: () {
-        context.read<CartBloc>().add(CartProductAdded(product));
+        context.read<CartCubit>().addProduct(product);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Added to cart')));

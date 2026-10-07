@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_cubit.dart';
 
 class CartCouponField extends StatefulWidget {
   const CartCouponField({super.key, required this.couponCode});
@@ -43,6 +43,6 @@ class _CartCouponFieldState extends State<CartCouponField> {
   }
 
   void _save() {
-    context.read<CartBloc>().add(CartCouponSaved(_code));
+    context.read<CartCubit>().saveCoupon(_code);
   }
 }

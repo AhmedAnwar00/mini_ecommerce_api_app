@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:mini_ecommerce_app_prompt/core/di/injection.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_cubit.dart';
 
 class App extends StatelessWidget {
   const App({super.key});
@@ -14,7 +14,7 @@ class App extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider.value(value: getIt<SessionBloc>()),
-        BlocProvider.value(value: getIt<CartBloc>()),
+        BlocProvider.value(value: getIt<CartCubit>()),
       ],
       child: MaterialApp.router(
         title: 'Mini shop',

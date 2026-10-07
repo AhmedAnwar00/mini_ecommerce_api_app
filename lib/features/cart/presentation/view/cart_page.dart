@@ -7,7 +7,7 @@ import 'package:mini_ecommerce_app_prompt/core/ui/widgets/error_view.dart';
 import 'package:mini_ecommerce_app_prompt/core/ui/widgets/loading_view.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/presentation/view/widgets/cart_coupon_field.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/presentation/view/widgets/cart_ready_body.dart';
-import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_cubit.dart';
 
 class CartPage extends StatelessWidget {
   const CartPage({super.key});
@@ -16,13 +16,13 @@ class CartPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Cart')),
-      body: BlocBuilder<CartBloc, CartState>(
+      body: BlocBuilder<CartCubit, CartState>(
         builder: (context, state) {
           return switch (state) {
             CartLoading() => const LoadingView(),
             CartFailure(:final message) => ErrorView(
               message: message,
-              onAction: () => context.read<CartBloc>().add(const CartStarted()),
+              onAction: () => context.read<CartCubit>().start(),
             ),
             CartEmpty(:final cart) => Column(
               children: [

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:mini_ecommerce_app_prompt/core/ui/minor_units_format.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_line.dart';
-import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_cubit.dart';
 
 class CartLineTile extends StatelessWidget {
   const CartLineTile({super.key, required this.line});
@@ -25,27 +25,21 @@ class CartLineTile extends StatelessWidget {
               children: [
                 IconButton(
                   onPressed: () {
-                    context.read<CartBloc>().add(
-                      CartQuantityDecreased(line.productId),
-                    );
+                    context.read<CartCubit>().decreaseQuantity(line.productId);
                   },
                   icon: const Icon(Icons.remove),
                 ),
                 Text('${line.quantity}'),
                 IconButton(
                   onPressed: () {
-                    context.read<CartBloc>().add(
-                      CartQuantityIncreased(line.productId),
-                    );
+                    context.read<CartCubit>().increaseQuantity(line.productId);
                   },
                   icon: const Icon(Icons.add),
                 ),
                 const Spacer(),
                 IconButton(
                   onPressed: () {
-                    context.read<CartBloc>().add(
-                      CartLineRemoved(line.productId),
-                    );
+                    context.read<CartCubit>().removeLine(line.productId);
                   },
                   icon: const Icon(Icons.delete_outline),
                 ),

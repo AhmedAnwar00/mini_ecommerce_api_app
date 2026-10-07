@@ -18,7 +18,7 @@ import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/l
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_bloc.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_state.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_repository.dart';
-import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/checkout_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/coupon_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/dio_checkout_api.dart';
@@ -65,7 +65,7 @@ Future<void> configureDependencies() async {
       ),
     )
     ..registerLazySingleton(
-      () => CartBloc(repository: getIt(), sessionBloc: getIt()),
+      () => CartCubit(repository: getIt(), sessionBloc: getIt()),
     )
     ..registerLazySingleton<GoRouter>(() => buildRouter(getIt))
     ..registerFactory(() => LoginBloc(getIt()))

@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:mini_ecommerce_app_prompt/core/ui/widgets/empty_view.dart';
 import 'package:mini_ecommerce_app_prompt/core/ui/widgets/error_view.dart';
 import 'package:mini_ecommerce_app_prompt/core/ui/widgets/loading_view.dart';
-import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/view/widgets/product_details_content.dart';
 import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/viewmodel/product_details_bloc.dart';
 
@@ -14,7 +14,7 @@ class ProductDetailsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<CartBloc, CartState>(
+    return BlocListener<CartCubit, CartState>(
       listener: (context, state) {
         if (state is CartFailure) {
           ScaffoldMessenger.of(
