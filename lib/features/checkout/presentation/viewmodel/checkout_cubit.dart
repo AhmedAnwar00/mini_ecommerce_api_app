@@ -13,18 +13,6 @@ import 'package:mini_ecommerce_app_prompt/features/checkout/domain/money.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/checkout_draft.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/order.dart';
 
-sealed class CheckoutEvent {
-  const CheckoutEvent();
-}
-
-class CheckoutRequested extends CheckoutEvent {
-  const CheckoutRequested();
-}
-
-class CheckoutSubmitted extends CheckoutEvent {
-  const CheckoutSubmitted();
-}
-
 sealed class CheckoutState {
   const CheckoutState();
 }
@@ -69,8 +57,8 @@ class CheckoutSuccess extends CheckoutState {
   final int quotedTotalMinor;
 }
 
-class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
-  CheckoutBloc({
+class CheckoutCubit extends Cubit<CheckoutState> {
+  CheckoutCubit({
     required this.cartRepository,
     required this.couponApi,
     required this.checkoutApi,
@@ -78,10 +66,7 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     required this.policy,
     required this.ownerId,
     required this.membershipBasisPoints,
-  }) : super(const CheckoutLoading()) {
-    on<CheckoutRequested>(_onRequested);
-    on<CheckoutSubmitted>(_onSubmitted);
-  }
+  }) : super(const CheckoutLoading());
 
   final CartRepository cartRepository;
   final CouponApi couponApi;
@@ -91,10 +76,7 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
   final String? ownerId;
   final int membershipBasisPoints;
 
-  Future<void> _onRequested(
-    CheckoutRequested event,
-    Emitter<CheckoutState> emit,
-  ) async {
+  Future<void> load() async {
     emit(const CheckoutLoading());
     try {
       final cart = await cartRepository.read(userId: ownerId);
@@ -143,10 +125,7 @@ class CheckoutBloc extends Bloc<CheckoutEvent, CheckoutState> {
     }
   }
 
-  Future<void> _onSubmitted(
-    CheckoutSubmitted event,
-    Emitter<CheckoutState> emit,
-  ) async {
+  Future<void> submit() async {
     final draft = switch (state) {
       CheckoutReady(:final draft) => draft,
       CheckoutSubmitFailure(:final draft) => draft,

@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/checkout_draft.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/view/widgets/checkout_quote_summary.dart';
-import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmodel/checkout_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmodel/checkout_cubit.dart';
 
 class CheckoutBody extends StatelessWidget {
   const CheckoutBody({
@@ -47,7 +47,7 @@ class CheckoutBody extends StatelessWidget {
           onPressed: submitting || !draft.quote.canPlaceOrder
               ? null
               : () =>
-                    context.read<CheckoutBloc>().add(const CheckoutSubmitted()),
+                    context.read<CheckoutCubit>().submit(),
           child: submitting
               ? const SizedBox(
                   width: 18,

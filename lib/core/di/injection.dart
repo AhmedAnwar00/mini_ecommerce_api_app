@@ -25,7 +25,7 @@ import 'package:mini_ecommerce_app_prompt/features/checkout/data/dio_checkout_ap
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/dio_coupon_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/domain/calculate_checkout.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/domain/checkout_policy.dart';
-import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmodel/checkout_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmodel/checkout_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/data/dio_products_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/data/products_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/viewmodel/product_details_cubit.dart';
@@ -76,7 +76,7 @@ Future<void> configureDependencies() async {
     ..registerFactory(() {
       final session = getIt<SessionCubit>().state;
       final user = session is SessionAuthenticated ? session.user : null;
-      return CheckoutBloc(
+      return CheckoutCubit(
         cartRepository: getIt(),
         couponApi: getIt(),
         checkoutApi: getIt(),

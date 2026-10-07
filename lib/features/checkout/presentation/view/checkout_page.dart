@@ -7,14 +7,14 @@ import 'package:mini_ecommerce_app_prompt/core/ui/widgets/error_view.dart';
 import 'package:mini_ecommerce_app_prompt/core/ui/widgets/loading_view.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/order.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/view/widgets/checkout_body.dart';
-import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmodel/checkout_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmodel/checkout_cubit.dart';
 
 class CheckoutPage extends StatelessWidget {
   const CheckoutPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<CheckoutBloc, CheckoutState>(
+    return BlocListener<CheckoutCubit, CheckoutState>(
       listener: (context, state) {
         if (state is CheckoutSuccess) {
           context.go(
@@ -28,7 +28,7 @@ class CheckoutPage extends StatelessWidget {
       },
       child: Scaffold(
         appBar: AppBar(title: const Text('Checkout')),
-        body: BlocBuilder<CheckoutBloc, CheckoutState>(
+        body: BlocBuilder<CheckoutCubit, CheckoutState>(
           builder: (context, state) {
             return switch (state) {
               CheckoutLoading() => const LoadingView(),
@@ -40,7 +40,7 @@ class CheckoutPage extends StatelessWidget {
               CheckoutFailure(:final message) => ErrorView(
                 message: message,
                 onAction: () {
-                  context.read<CheckoutBloc>().add(const CheckoutRequested());
+                  context.read<CheckoutCubit>().load();
                 },
               ),
               CheckoutReady(:final draft) => CheckoutBody(

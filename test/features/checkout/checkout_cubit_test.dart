@@ -12,7 +12,7 @@ import 'package:mini_ecommerce_app_prompt/features/checkout/domain/checkout_poli
 import 'package:mini_ecommerce_app_prompt/features/checkout/domain/coupon.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/domain/money.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/order.dart';
-import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmodel/checkout_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmodel/checkout_cubit.dart';
 
 void main() {
   const policy = CheckoutPolicy(
@@ -34,7 +34,7 @@ void main() {
       const Cart(lines: [mug], couponCode: 'NOPE'),
       userId: 'u1',
     );
-    final bloc = CheckoutBloc(
+    final cubit = CheckoutCubit(
       cartRepository: repository,
       couponApi: _RejectingCouponApi(),
       checkoutApi: _UnusedCheckoutApi(),
@@ -44,10 +44,11 @@ void main() {
       membershipBasisPoints: 0,
     );
 
-    bloc.add(const CheckoutRequested());
-    final ready = await bloc.stream.firstWhere(
+    final readyFuture = cubit.stream.firstWhere(
       (state) => state is CheckoutReady,
     );
+    await cubit.load();
+    final ready = await readyFuture;
 
     expect(ready, isA<CheckoutReady>());
     final draft = (ready as CheckoutReady).draft;
@@ -55,14 +56,14 @@ void main() {
     expect(draft.appliedCouponCode, isNull);
     expect(draft.couponMessage, 'Coupon is not valid.');
 
-    await bloc.close();
+    await cubit.close();
   });
 
   test('a placed order clears only that user cart', () async {
     final repository = CartRepository(_MemoryStore());
     await repository.write(const Cart(lines: [mug]), userId: 'u1');
     await repository.write(const Cart(lines: [mug]), userId: 'u2');
-    final bloc = CheckoutBloc(
+    final cubit = CheckoutCubit(
       cartRepository: repository,
       couponApi: _UnusedCouponApi(),
       checkoutApi: _FixedCheckoutApi(),
@@ -72,19 +73,21 @@ void main() {
       membershipBasisPoints: 1000,
     );
 
-    bloc.add(const CheckoutRequested());
-    final ready = await bloc.stream.firstWhere(
+    final readyFuture = cubit.stream.firstWhere(
       (state) => state is CheckoutReady,
     );
+    await cubit.load();
+    final ready = await readyFuture;
     expect(
       (ready as CheckoutReady).draft.quote.membershipDiscount,
       const Money(1000),
     );
 
-    bloc.add(const CheckoutSubmitted());
-    final success = await bloc.stream.firstWhere(
+    final successFuture = cubit.stream.firstWhere(
       (state) => state is CheckoutSuccess,
     );
+    await cubit.submit();
+    final success = await successFuture;
 
     expect(success, isA<CheckoutSuccess>());
     expect((await repository.read(userId: 'u1')).lines, isEmpty);
@@ -92,7 +95,7 @@ void main() {
     expect(otherCart.lines.single.productId, mug.productId);
     expect(otherCart.lines.single.quantity, mug.quantity);
 
-    await bloc.close();
+    await cubit.close();
   });
 }
 

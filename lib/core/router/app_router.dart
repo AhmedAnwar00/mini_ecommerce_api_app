@@ -13,7 +13,7 @@ import 'package:mini_ecommerce_app_prompt/features/cart/presentation/view/cart_p
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/order.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/view/checkout_page.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/view/order_confirmation_page.dart';
-import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmodel/checkout_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmodel/checkout_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/view/product_details_page.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/presentation/view/products_page.dart';
 import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/viewmodel/product_details_cubit.dart';
@@ -112,7 +112,7 @@ GoRouter buildRouter(GetIt locator) {
         builder: (context, state) {
           return BlocProvider(
             create: (_) =>
-                locator<CheckoutBloc>()..add(const CheckoutRequested()),
+                locator<CheckoutCubit>()..load(),
             child: const CheckoutPage(),
           );
         },
