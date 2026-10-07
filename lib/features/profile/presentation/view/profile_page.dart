@@ -5,7 +5,7 @@ import 'package:mini_ecommerce_app_prompt/core/ui/widgets/error_view.dart';
 import 'package:mini_ecommerce_app_prompt/core/ui/widgets/loading_view.dart';
 import 'package:mini_ecommerce_app_prompt/features/profile/presentation/view/widgets/logout_button.dart';
 import 'package:mini_ecommerce_app_prompt/features/profile/presentation/view/widgets/profile_details.dart';
-import 'package:mini_ecommerce_app_prompt/features/profile/presentation/viewmodel/profile_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/profile/presentation/viewmodel/profile_cubit.dart';
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
@@ -14,14 +14,14 @@ class ProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Profile')),
-      body: BlocBuilder<ProfileBloc, ProfileState>(
+      body: BlocBuilder<ProfileCubit, ProfileState>(
         builder: (context, state) {
           return switch (state) {
             ProfileLoading() => const LoadingView(),
             ProfileFailure(:final message) => ErrorView(
               message: message,
               onAction: () {
-                context.read<ProfileBloc>().add(const ProfileRequested());
+                context.read<ProfileCubit>().loadProfile();
               },
             ),
             ProfileReady(:final user) => Padding(

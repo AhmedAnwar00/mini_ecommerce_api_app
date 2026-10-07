@@ -19,7 +19,7 @@ import 'package:mini_ecommerce_app_prompt/features/products/presentation/view/pr
 import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/viewmodel/product_details_bloc.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/presentation/viewmodel/products_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/profile/presentation/view/profile_page.dart';
-import 'package:mini_ecommerce_app_prompt/features/profile/presentation/viewmodel/profile_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/profile/presentation/viewmodel/profile_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/splash/presentation/view/splash_page.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
@@ -131,7 +131,7 @@ GoRouter buildRouter(GetIt locator) {
         builder: (context, state) {
           return BlocProvider(
             create: (_) =>
-                locator<ProfileBloc>()..add(const ProfileRequested()),
+                locator<ProfileCubit>()..loadProfile(),
             child: const ProfilePage(),
           );
         },

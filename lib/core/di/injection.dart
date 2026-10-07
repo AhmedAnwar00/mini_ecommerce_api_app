@@ -32,7 +32,7 @@ import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/
 import 'package:mini_ecommerce_app_prompt/features/products/presentation/viewmodel/products_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/profile/data/dio_profile_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/profile/data/profile_api.dart';
-import 'package:mini_ecommerce_app_prompt/features/profile/presentation/viewmodel/profile_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/profile/presentation/viewmodel/profile_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -86,5 +86,5 @@ Future<void> configureDependencies() async {
         membershipBasisPoints: user?.membershipBasisPoints ?? 0,
       );
     })
-    ..registerFactory(() => ProfileBloc(getIt()));
+    ..registerFactory(() => ProfileCubit(getIt()));
 }

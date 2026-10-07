@@ -4,14 +4,6 @@ import 'package:mini_ecommerce_app_prompt/core/error/app_failure.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/user.dart';
 import 'package:mini_ecommerce_app_prompt/features/profile/data/profile_api.dart';
 
-sealed class ProfileEvent {
-  const ProfileEvent();
-}
-
-class ProfileRequested extends ProfileEvent {
-  const ProfileRequested();
-}
-
 sealed class ProfileState {
   const ProfileState();
 }
@@ -32,17 +24,12 @@ class ProfileReady extends ProfileState {
   final User user;
 }
 
-class ProfileBloc extends Bloc<ProfileEvent, ProfileState> {
-  ProfileBloc(this._api) : super(const ProfileLoading()) {
-    on<ProfileRequested>(_onRequested);
-  }
+class ProfileCubit extends Cubit<ProfileState> {
+  ProfileCubit(this._api) : super(const ProfileLoading());
 
   final ProfileApi _api;
 
-  Future<void> _onRequested(
-    ProfileRequested event,
-    Emitter<ProfileState> emit,
-  ) async {
+  Future<void> loadProfile() async {
     emit(const ProfileLoading());
     try {
       final user = await _api.me();
