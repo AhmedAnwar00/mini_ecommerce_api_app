@@ -3,9 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mini_ecommerce_app_prompt/core/storage/token_storage.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_repository.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/model/auth_session.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/model/login_request.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/model/user.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_session.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/data/login_request.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/data/user.dart';
 
 void main() {
   test('login stores the token and returns the user', () async {

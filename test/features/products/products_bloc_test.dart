@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:mini_ecommerce_app_prompt/core/error/app_failure.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/data/products_api.dart';
-import 'package:mini_ecommerce_app_prompt/features/products/model/product.dart';
-import 'package:mini_ecommerce_app_prompt/features/products/viewmodel/products_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/data/product.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/presentation/viewmodel/products_bloc.dart';
 
 void main() {
   test('emits empty when the catalog has no products', () async {

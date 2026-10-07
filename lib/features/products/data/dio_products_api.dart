@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:mini_ecommerce_app_prompt/core/network/dio_client.dart';
 import 'package:mini_ecommerce_app_prompt/core/network/json_body.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/data/products_api.dart';
-import 'package:mini_ecommerce_app_prompt/features/products/model/product.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/data/product.dart';
 
 class DioProductsApi implements ProductsApi {
   DioProductsApi(this._dio);

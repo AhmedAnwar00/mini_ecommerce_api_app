@@ -4,8 +4,8 @@ import 'package:mini_ecommerce_app_prompt/core/error/app_failure.dart';
 import 'package:mini_ecommerce_app_prompt/core/network/dio_client.dart';
 import 'package:mini_ecommerce_app_prompt/core/network/json_body.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_api.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/model/auth_session.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/model/login_request.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_session.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/data/login_request.dart';
 
 class DioAuthApi implements AuthApi {
   DioAuthApi(this._dio);

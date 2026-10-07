@@ -1,7 +1,7 @@
 import 'package:mini_ecommerce_app_prompt/core/storage/token_storage.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_api.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/model/login_request.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/model/user.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/data/login_request.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/data/user.dart';
 
 class AuthRepository {
   AuthRepository(this._api, this._tokens);

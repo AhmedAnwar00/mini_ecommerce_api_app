@@ -5,22 +5,22 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:mini_ecommerce_app_prompt/features/auth/view/login_page.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/login_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/session_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/session_state.dart';
-import 'package:mini_ecommerce_app_prompt/features/cart/view/cart_page.dart';
-import 'package:mini_ecommerce_app_prompt/features/checkout/model/order.dart';
-import 'package:mini_ecommerce_app_prompt/features/checkout/view/checkout_page.dart';
-import 'package:mini_ecommerce_app_prompt/features/checkout/view/order_confirmation_page.dart';
-import 'package:mini_ecommerce_app_prompt/features/checkout/viewmodel/checkout_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/products/view/product_details_page.dart';
-import 'package:mini_ecommerce_app_prompt/features/products/view/products_page.dart';
-import 'package:mini_ecommerce_app_prompt/features/products/viewmodel/product_details_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/products/viewmodel/products_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/profile/view/profile_page.dart';
-import 'package:mini_ecommerce_app_prompt/features/profile/viewmodel/profile_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/splash/view/splash_page.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/view/login_page.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/login_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_state.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/presentation/view/cart_page.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/data/order.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/view/checkout_page.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/view/order_confirmation_page.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmodel/checkout_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/view/product_details_page.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/presentation/view/products_page.dart';
+import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/viewmodel/product_details_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/presentation/viewmodel/products_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/profile/presentation/view/profile_page.dart';
+import 'package:mini_ecommerce_app_prompt/features/profile/presentation/viewmodel/profile_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/splash/presentation/view/splash_page.dart';
 
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream(Stream<dynamic> stream) {

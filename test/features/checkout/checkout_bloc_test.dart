@@ -3,16 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mini_ecommerce_app_prompt/core/error/app_failure.dart';
 import 'package:mini_ecommerce_app_prompt/core/storage/key_value_store.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_repository.dart';
-import 'package:mini_ecommerce_app_prompt/features/cart/model/cart.dart';
-import 'package:mini_ecommerce_app_prompt/features/cart/model/cart_line.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/data/cart.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_line.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/checkout_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/coupon_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/domain/calculate_checkout.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/domain/checkout_policy.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/domain/coupon.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/domain/money.dart';
-import 'package:mini_ecommerce_app_prompt/features/checkout/model/order.dart';
-import 'package:mini_ecommerce_app_prompt/features/checkout/viewmodel/checkout_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/data/order.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmodel/checkout_bloc.dart';
 
 void main() {
   const policy = CheckoutPolicy(

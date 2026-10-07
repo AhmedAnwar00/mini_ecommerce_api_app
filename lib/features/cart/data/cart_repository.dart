@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:mini_ecommerce_app_prompt/core/storage/key_value_store.dart';
-import 'package:mini_ecommerce_app_prompt/features/cart/model/cart.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/data/cart.dart';
 
 class CartRepository {
   CartRepository(this._store);
