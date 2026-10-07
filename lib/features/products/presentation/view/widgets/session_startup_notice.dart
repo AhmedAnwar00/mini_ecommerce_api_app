@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_state.dart';
 
 class SessionStartupNotice extends StatefulWidget {
@@ -24,7 +24,7 @@ class _SessionStartupNoticeState extends State<SessionStartupNotice> {
 
   void _show() {
     if (_shown || !mounted) return;
-    final message = switch (context.read<SessionBloc>().state) {
+    final message = switch (context.read<SessionCubit>().state) {
       SessionUnauthenticated(:final message) => message,
       SessionAuthenticated(:final message) => message,
       _ => null,

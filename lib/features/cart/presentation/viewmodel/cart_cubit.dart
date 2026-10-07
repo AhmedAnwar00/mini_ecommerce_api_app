@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_state.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_repository.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/data/cart.dart';
@@ -47,7 +47,7 @@ class CartCubit extends Cubit<CartState> {
   }
 
   final CartRepository repository;
-  final SessionBloc sessionBloc;
+  final SessionCubit sessionBloc;
   late final StreamSubscription<SessionState> _subscription;
   late final StreamSubscription<void> _updates;
   Future<void> _queue = Future<void>.value();

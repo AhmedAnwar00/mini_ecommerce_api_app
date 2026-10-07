@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/view/login_page.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/login_cubit.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_state.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/presentation/view/cart_page.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/order.dart';
@@ -37,7 +37,7 @@ class GoRouterRefreshStream extends ChangeNotifier {
 }
 
 GoRouter buildRouter(GetIt locator) {
-  final session = locator<SessionBloc>();
+  final session = locator<SessionCubit>();
   SessionState? previous;
   var pendingProductsRedirect = false;
   return GoRouter(

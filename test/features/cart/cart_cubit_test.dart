@@ -8,8 +8,7 @@ import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_repository.dar
 import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_session.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/login_request.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/user.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_event.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/data/cart.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_line.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_repository.dart';
@@ -168,7 +167,7 @@ void main() {
     );
     final merged = harness.cubit.stream.firstWhere((state) => state is CartReady);
 
-    harness.session.add(const SessionSignedIn(_user));
+    harness.session.signIn(_user);
     final state = await merged as CartReady;
 
     expect(state.cart.lines.single.quantity, 1);
@@ -187,7 +186,7 @@ void main() {
       (state) => state is CartFailure,
     );
 
-    harness.session.add(const SessionSignedIn(_user));
+    harness.session.signIn(_user);
 
     expect(
       ((await failed) as CartFailure).message,
@@ -200,7 +199,7 @@ void main() {
 class _Harness {
   _Harness(this.session, this.cubit, this.notifier);
 
-  final SessionBloc session;
+  final SessionCubit session;
   final CartCubit cubit;
   final UnauthorizedNotifier notifier;
 
@@ -209,7 +208,7 @@ class _Harness {
     bool signedOut = false,
   }) async {
     final notifier = UnauthorizedNotifier();
-    final session = SessionBloc(
+    final session = SessionCubit(
       authRepository: AuthRepository(_UnusedAuthApi(), _MemoryTokens()),
       profileApi: _UnusedProfileApi(),
       unauthorizedNotifier: notifier,
@@ -220,7 +219,7 @@ class _Harness {
     );
     if (signedOut) {
       final loaded = cubit.stream.first;
-      session.add(const SessionExpired());
+      session.expire();
       await loaded;
     }
     return _Harness(session, cubit, notifier);

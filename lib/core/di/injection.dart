@@ -15,7 +15,7 @@ import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_repository.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/dio_auth_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/login_cubit.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_state.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_repository.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_cubit.dart';
@@ -58,7 +58,7 @@ Future<void> configureDependencies() async {
     ..registerLazySingleton(CalculateCheckout.new)
     ..registerLazySingleton(() => CheckoutPolicy.standard)
     ..registerLazySingleton(
-      () => SessionBloc(
+      () => SessionCubit(
         authRepository: getIt(),
         profileApi: getIt(),
         unauthorizedNotifier: getIt(),
@@ -74,7 +74,7 @@ Future<void> configureDependencies() async {
       (productId, _) => ProductDetailsCubit(getIt<ProductsApi>(), productId),
     )
     ..registerFactory(() {
-      final session = getIt<SessionBloc>().state;
+      final session = getIt<SessionCubit>().state;
       final user = session is SessionAuthenticated ? session.user : null;
       return CheckoutBloc(
         cartRepository: getIt(),

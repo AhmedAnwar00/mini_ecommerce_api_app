@@ -4,8 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/view/widgets/login_form.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/login_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/login_state.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_event.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_cubit.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -15,7 +14,7 @@ class LoginPage extends StatelessWidget {
     return BlocListener<LoginCubit, LoginState>(
       listener: (context, state) {
         if (state is LoginSuccess) {
-          context.read<SessionBloc>().add(SessionSignedIn(state.user));
+          context.read<SessionCubit>().signIn(state.user);
         }
       },
       child: Scaffold(
