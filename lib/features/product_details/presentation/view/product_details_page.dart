@@ -7,7 +7,7 @@ import 'package:mini_ecommerce_app_prompt/core/ui/widgets/error_view.dart';
 import 'package:mini_ecommerce_app_prompt/core/ui/widgets/loading_view.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/view/widgets/product_details_content.dart';
-import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/viewmodel/product_details_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/viewmodel/product_details_cubit.dart';
 
 class ProductDetailsPage extends StatelessWidget {
   const ProductDetailsPage({super.key});
@@ -24,16 +24,14 @@ class ProductDetailsPage extends StatelessWidget {
       },
       child: Scaffold(
         appBar: AppBar(title: const Text('Product')),
-        body: BlocBuilder<ProductDetailsBloc, ProductDetailsState>(
+        body: BlocBuilder<ProductDetailsCubit, ProductDetailsState>(
           builder: (context, state) {
             return switch (state) {
               ProductDetailsLoading() => const LoadingView(),
               ProductDetailsFailure(:final message) => ErrorView(
                 message: message,
                 onAction: () {
-                  context.read<ProductDetailsBloc>().add(
-                    const ProductDetailsRequested(),
-                  );
+                  context.read<ProductDetailsCubit>().loadProduct();
                 },
               ),
               ProductDetailsNotFound() => EmptyView(
