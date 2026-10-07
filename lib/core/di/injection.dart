@@ -14,7 +14,7 @@ import 'package:mini_ecommerce_app_prompt/core/storage/token_storage.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_repository.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/dio_auth_api.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/login_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/login_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_bloc.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_state.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_repository.dart';
@@ -68,7 +68,7 @@ Future<void> configureDependencies() async {
       () => CartCubit(repository: getIt(), sessionBloc: getIt()),
     )
     ..registerLazySingleton<GoRouter>(() => buildRouter(getIt))
-    ..registerFactory(() => LoginBloc(getIt()))
+    ..registerFactory(() => LoginCubit(getIt()))
     ..registerFactory(() => ProductsCubit(getIt()))
     ..registerFactoryParam<ProductDetailsBloc, String, String>(
       (productId, _) => ProductDetailsBloc(getIt<ProductsApi>(), productId),

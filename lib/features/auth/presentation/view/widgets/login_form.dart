@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:mini_ecommerce_app_prompt/features/auth/data/login_request.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/login_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/login_event.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/login_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/login_state.dart';
 
 class LoginForm extends StatefulWidget {
@@ -70,8 +69,8 @@ class _LoginFormState extends State<LoginForm> {
   }
 
   void _submit() {
-    context.read<LoginBloc>().add(
-      LoginSubmitted(LoginRequest(email: _email, password: _password)),
+    context.read<LoginCubit>().submit(
+      LoginRequest(email: _email, password: _password),
     );
   }
 }

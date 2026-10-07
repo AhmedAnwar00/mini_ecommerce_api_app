@@ -6,7 +6,7 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/view/login_page.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/login_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/login_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_bloc.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_state.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/presentation/view/cart_page.dart';
@@ -79,7 +79,7 @@ GoRouter buildRouter(GetIt locator) {
         path: '/login',
         builder: (context, state) {
           return BlocProvider(
-            create: (_) => locator<LoginBloc>(),
+            create: (_) => locator<LoginCubit>(),
             child: const LoginPage(),
           );
         },
