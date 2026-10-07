@@ -29,7 +29,7 @@ import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmod
 import 'package:mini_ecommerce_app_prompt/features/products/data/dio_products_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/data/products_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/viewmodel/product_details_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/products/presentation/viewmodel/products_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/presentation/viewmodel/products_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/profile/data/dio_profile_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/profile/data/profile_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/profile/presentation/viewmodel/profile_bloc.dart';
@@ -69,7 +69,7 @@ Future<void> configureDependencies() async {
     )
     ..registerLazySingleton<GoRouter>(() => buildRouter(getIt))
     ..registerFactory(() => LoginBloc(getIt()))
-    ..registerFactory(() => ProductsBloc(getIt()))
+    ..registerFactory(() => ProductsCubit(getIt()))
     ..registerFactoryParam<ProductDetailsBloc, String, String>(
       (productId, _) => ProductDetailsBloc(getIt<ProductsApi>(), productId),
     )

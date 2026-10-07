@@ -4,14 +4,6 @@ import 'package:mini_ecommerce_app_prompt/core/error/app_failure.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/data/products_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/data/product.dart';
 
-sealed class ProductsEvent {
-  const ProductsEvent();
-}
-
-class ProductsRequested extends ProductsEvent {
-  const ProductsRequested();
-}
-
 sealed class ProductsState {
   const ProductsState();
 }
@@ -36,17 +28,12 @@ class ProductsReady extends ProductsState {
   final List<Product> products;
 }
 
-class ProductsBloc extends Bloc<ProductsEvent, ProductsState> {
-  ProductsBloc(this._api) : super(const ProductsLoading()) {
-    on<ProductsRequested>(_onRequested);
-  }
+class ProductsCubit extends Cubit<ProductsState> {
+  ProductsCubit(this._api) : super(const ProductsLoading());
 
   final ProductsApi _api;
 
-  Future<void> _onRequested(
-    ProductsRequested event,
-    Emitter<ProductsState> emit,
-  ) async {
+  Future<void> loadProducts() async {
     emit(const ProductsLoading());
     try {
       final products = await _api.getProducts();

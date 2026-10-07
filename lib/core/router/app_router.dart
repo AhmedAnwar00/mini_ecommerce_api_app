@@ -17,7 +17,7 @@ import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmod
 import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/view/product_details_page.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/presentation/view/products_page.dart';
 import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/viewmodel/product_details_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/products/presentation/viewmodel/products_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/presentation/viewmodel/products_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/profile/presentation/view/profile_page.dart';
 import 'package:mini_ecommerce_app_prompt/features/profile/presentation/viewmodel/profile_bloc.dart';
 import 'package:mini_ecommerce_app_prompt/features/splash/presentation/view/splash_page.dart';
@@ -89,7 +89,7 @@ GoRouter buildRouter(GetIt locator) {
         builder: (context, state) {
           return BlocProvider(
             create: (_) =>
-                locator<ProductsBloc>()..add(const ProductsRequested()),
+                locator<ProductsCubit>()..loadProducts(),
             child: const ProductsPage(),
           );
         },

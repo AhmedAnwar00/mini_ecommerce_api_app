@@ -3,36 +3,30 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mini_ecommerce_app_prompt/core/error/app_failure.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/data/products_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/data/product.dart';
-import 'package:mini_ecommerce_app_prompt/features/products/presentation/viewmodel/products_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/presentation/viewmodel/products_cubit.dart';
 
 void main() {
   test('emits empty when the catalog has no products', () async {
-    final bloc = ProductsBloc(FakeProductsApi(const []));
+    final cubit = ProductsCubit(FakeProductsApi(const []));
 
-    bloc.add(const ProductsRequested());
-    final state = await bloc.stream.firstWhere(
-      (value) => value is ProductsEmpty || value is ProductsFailure,
-    );
+    await cubit.loadProducts();
 
-    expect(state, isA<ProductsEmpty>());
-    await bloc.close();
+    expect(cubit.state, isA<ProductsEmpty>());
+    await cubit.close();
   });
 
   test('emits a failure message from the api', () async {
-    final bloc = ProductsBloc(
+    final cubit = ProductsCubit(
       FakeProductsApi(
         const [],
         failure: const AppFailure(AppFailureKind.network, 'Offline'),
       ),
     );
 
-    bloc.add(const ProductsRequested());
-    final state = await bloc.stream.firstWhere(
-      (value) => value is ProductsFailure,
-    );
+    await cubit.loadProducts();
 
-    expect((state as ProductsFailure).message, 'Offline');
-    await bloc.close();
+    expect((cubit.state as ProductsFailure).message, 'Offline');
+    await cubit.close();
   });
 }
 

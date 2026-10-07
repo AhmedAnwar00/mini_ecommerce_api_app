@@ -7,7 +7,7 @@ import 'package:mini_ecommerce_app_prompt/core/ui/widgets/error_view.dart';
 import 'package:mini_ecommerce_app_prompt/core/ui/widgets/loading_view.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/presentation/view/widgets/product_list.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/presentation/view/widgets/session_startup_notice.dart';
-import 'package:mini_ecommerce_app_prompt/features/products/presentation/viewmodel/products_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/presentation/viewmodel/products_cubit.dart';
 
 class ProductsPage extends StatelessWidget {
   const ProductsPage({super.key});
@@ -29,14 +29,14 @@ class ProductsPage extends StatelessWidget {
             ),
           ],
         ),
-        body: BlocBuilder<ProductsBloc, ProductsState>(
+        body: BlocBuilder<ProductsCubit, ProductsState>(
           builder: (context, state) {
             return switch (state) {
               ProductsLoading() => const LoadingView(),
               ProductsFailure(:final message) => ErrorView(
                 message: message,
                 onAction: () {
-                  context.read<ProductsBloc>().add(const ProductsRequested());
+                  context.read<ProductsCubit>().loadProducts();
                 },
               ),
               ProductsEmpty() => const EmptyView(message: 'No products yet.'),
