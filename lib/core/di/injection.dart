@@ -14,25 +14,25 @@ import 'package:mini_ecommerce_app_prompt/core/storage/token_storage.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/auth_repository.dart';
 import 'package:mini_ecommerce_app_prompt/features/auth/data/dio_auth_api.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/login_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/session_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/auth/viewmodel/session_state.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/login_cubit.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_cubit.dart';
+import 'package:mini_ecommerce_app_prompt/features/auth/presentation/viewmodel/session_state.dart';
 import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_repository.dart';
-import 'package:mini_ecommerce_app_prompt/features/cart/viewmodel/cart_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/presentation/viewmodel/cart_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/checkout_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/coupon_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/dio_checkout_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/dio_coupon_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/domain/calculate_checkout.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/domain/checkout_policy.dart';
-import 'package:mini_ecommerce_app_prompt/features/checkout/viewmodel/checkout_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/presentation/viewmodel/checkout_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/data/dio_products_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/products/data/products_api.dart';
-import 'package:mini_ecommerce_app_prompt/features/products/viewmodel/product_details_bloc.dart';
-import 'package:mini_ecommerce_app_prompt/features/products/viewmodel/products_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/product_details/presentation/viewmodel/product_details_cubit.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/presentation/viewmodel/products_cubit.dart';
 import 'package:mini_ecommerce_app_prompt/features/profile/data/dio_profile_api.dart';
 import 'package:mini_ecommerce_app_prompt/features/profile/data/profile_api.dart';
-import 'package:mini_ecommerce_app_prompt/features/profile/viewmodel/profile_bloc.dart';
+import 'package:mini_ecommerce_app_prompt/features/profile/presentation/viewmodel/profile_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -58,25 +58,25 @@ Future<void> configureDependencies() async {
     ..registerLazySingleton(CalculateCheckout.new)
     ..registerLazySingleton(() => CheckoutPolicy.standard)
     ..registerLazySingleton(
-      () => SessionBloc(
+      () => SessionCubit(
         authRepository: getIt(),
         profileApi: getIt(),
         unauthorizedNotifier: getIt(),
       ),
     )
     ..registerLazySingleton(
-      () => CartBloc(repository: getIt(), sessionBloc: getIt()),
+      () => CartCubit(repository: getIt(), sessionBloc: getIt()),
     )
     ..registerLazySingleton<GoRouter>(() => buildRouter(getIt))
-    ..registerFactory(() => LoginBloc(getIt()))
-    ..registerFactory(() => ProductsBloc(getIt()))
-    ..registerFactoryParam<ProductDetailsBloc, String, String>(
-      (productId, _) => ProductDetailsBloc(getIt<ProductsApi>(), productId),
+    ..registerFactory(() => LoginCubit(getIt()))
+    ..registerFactory(() => ProductsCubit(getIt()))
+    ..registerFactoryParam<ProductDetailsCubit, String, String>(
+      (productId, _) => ProductDetailsCubit(getIt<ProductsApi>(), productId),
     )
     ..registerFactory(() {
-      final session = getIt<SessionBloc>().state;
+      final session = getIt<SessionCubit>().state;
       final user = session is SessionAuthenticated ? session.user : null;
-      return CheckoutBloc(
+      return CheckoutCubit(
         cartRepository: getIt(),
         couponApi: getIt(),
         checkoutApi: getIt(),
@@ -86,5 +86,5 @@ Future<void> configureDependencies() async {
         membershipBasisPoints: user?.membershipBasisPoints ?? 0,
       );
     })
-    ..registerFactory(() => ProfileBloc(getIt()));
+    ..registerFactory(() => ProfileCubit(getIt()));
 }

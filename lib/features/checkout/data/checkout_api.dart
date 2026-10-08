@@ -1,5 +1,5 @@
-import 'package:mini_ecommerce_app_prompt/features/cart/model/cart_line.dart';
-import 'package:mini_ecommerce_app_prompt/features/checkout/model/order.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_line.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/data/order.dart';
 
 abstract class CheckoutApi {
   Future<Order> placeOrder({

@@ -2,9 +2,9 @@ import 'package:dio/dio.dart';
 
 import 'package:mini_ecommerce_app_prompt/core/network/dio_client.dart';
 import 'package:mini_ecommerce_app_prompt/core/network/json_body.dart';
-import 'package:mini_ecommerce_app_prompt/features/cart/model/cart_line.dart';
+import 'package:mini_ecommerce_app_prompt/features/cart/data/cart_line.dart';
 import 'package:mini_ecommerce_app_prompt/features/checkout/data/checkout_api.dart';
-import 'package:mini_ecommerce_app_prompt/features/checkout/model/order.dart';
+import 'package:mini_ecommerce_app_prompt/features/checkout/data/order.dart';
 
 class DioCheckoutApi implements CheckoutApi {
   DioCheckoutApi(this._dio);

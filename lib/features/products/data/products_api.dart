@@ -1,4 +1,4 @@
-import 'package:mini_ecommerce_app_prompt/features/products/model/product.dart';
+import 'package:mini_ecommerce_app_prompt/features/products/data/product.dart';
 
 abstract class ProductsApi {
   Future<List<Product>> getProducts();

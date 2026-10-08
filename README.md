@@ -1,22 +1,6 @@
-# mini_ecommerce_app_prompt
+# Mini shop
 
-A Flutter mini shop. A shopper can browse products, open a product, keep a local cart, sign in, check out, and view a profile. Remote calls go to `https://api.example.com` through Dio. Checkout totals are calculated in the app before an order is placed.
-
-## Getting Started
-
-This project is a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-
-From the project root:
+A Flutter shopper can browse products, open a product, keep a local cart, sign in, check out, and view a profile. Remote calls go to `https://api.example.com` through Dio. Checkout totals are calculated in the app before an order is placed.
 
 ```bash
 flutter pub get
@@ -26,186 +10,278 @@ flutter run
 
 ## Architecture
 
-The project follows MVVM + Repository with a feature-first structure under `lib/features`.
+The project uses MVVM with a repository only where one type must coordinate more than one data concern. Code is organized by feature under `lib/features`.
 
-Each screen is a View. It sends user actions to a Bloc and renders the state that Bloc emits. Bloc acts as the ViewModel: it owns presentation state and calls data or domain types. It does not build widgets.
+A screen is a View. It sends user actions to a Cubit and renders the state that Cubit emits. The Cubit is the ViewModel: it owns presentation state and calls data or domain types. It does not build widgets.
 
-A repository is used where a feature coordinates more than one data concern. Auth pairs the login API with token storage. Cart owns local JSON, owner keys, and the guest merge. Other features call an API contract directly.
-
-## Architecture Principles
-
-- **Separation of concerns.** Views render state. Blocs handle actions and UI state. Models hold data. Network and storage stay behind contracts in `lib/core` and each feature's `data` folder.
-- **Dependency inversion.** Feature code depends on contracts such as `AuthApi`, `ProductsApi`, and `TokenStorage`. `lib/core/di/injection.dart` supplies the Dio, secure-storage, and preferences implementations.
-- **Feature-first organization.** Auth, products, cart, checkout, and profile each keep their own view, viewmodel, data, and model files.
-- **Unidirectional data flow.** The view dispatches an event. The Bloc reads data, runs any rules, and emits the next state. The view rebuilds from that state.
-- **Avoiding unnecessary abstractions.** A repository or use case is added only when it has a job that a direct API call cannot cover.
-- **Every abstraction must solve a real problem.** Checkout has a domain layer because pricing rules are real. A pass-through wrapper around one HTTP call is left out.
-
-## Architecture Overview
-
-GetIt is the composition root. It creates the API and storage implementations, the two repositories, `CalculateCheckout`, and the Blocs. Views receive those Blocs through `BlocProvider`.
-
-```mermaid
-flowchart TB
-  GetIt["GetIt composition root"]
-
-  View --> Bloc["Bloc / ViewModel"]
-  Bloc --> Contracts["API and storage contracts"]
-  Contracts --> Implementations["Dio APIs, SecureTokenStorage, PreferencesKeyValueStore"]
-
-  CheckoutView["Checkout view"] --> CheckoutBloc
-  CheckoutBloc --> CalculateCheckout
-  CalculateCheckout --> Rules["Checkout rules"]
-
-  GetIt --> Bloc
-  GetIt --> CheckoutBloc
-  GetIt --> Implementations
-  GetIt --> CalculateCheckout
+```text
+lib/
+├── main.dart
+├── app.dart
+├── core/
+│   ├── di/            GetIt composition root
+│   ├── router/        go_router and auth redirects
+│   ├── error/         AppFailure
+│   ├── network/       Dio client, auth interceptor, failure mapping
+│   ├── storage/       TokenStorage and KeyValueStore contracts
+│   └── ui/            LoadingView, ErrorView, EmptyView, minor-unit formatting
+└── features/
+    ├── auth/             data, presentation
+    ├── products/         data, presentation
+    ├── product_details/  presentation
+    ├── cart/             data, presentation
+    ├── checkout/         data, domain, presentation
+    ├── profile/          data, presentation
+    └── splash/           presentation
 ```
 
-Auth and cart reach `TokenStorage` and `KeyValueStore` through `AuthRepository` and `CartRepository`. Products, profile, coupon validation, and order placement use their API contracts directly.
+Each feature keeps `data/` and `presentation/`. `domain/` exists only on checkout. `presentation/` holds the view and the Cubit viewmodel.
 
-## Feature Architecture
+`SessionCubit` and `CartCubit` are app-wide. `App` provides both through `MultiBlocProvider`. Other Cubits are created for the route that needs them.
 
-| Feature | Role | Main types |
-| --- | --- | --- |
-| Auth | Login and session | `LoginBloc`, `SessionBloc`, `AuthRepository`, `AuthApi` |
-| Products | Catalog | `ProductsBloc`, `ProductsApi` |
-| Product Details | One product | `ProductDetailsBloc`, same `ProductsApi` |
-| Cart | Local cart for the current owner | `CartBloc`, `CartRepository` |
-| Checkout | Quote, place order, confirmation | `CheckoutBloc`, `CalculateCheckout`, `CouponApi`, `CheckoutApi` |
-| Profile | Signed-in user | `ProfileBloc`, `ProfileApi` |
+Splash (`lib/features/splash/presentation/view/splash_page.dart`) shows `LoadingView` while the session is restored. It has no Cubit of its own.
 
-Product details lives in the products feature (`product_details_page.dart` and `product_details_bloc.dart`). It is a separate screen and Bloc, and it loads one product through `ProductsApi`.
+## Dependency injection
 
-Typical folders inside a feature are `view`, `viewmodel`, `data`, and `model`. Splash is a startup screen at `lib/features/splash` while the session is restored. It has no Bloc of its own.
+`lib/core/di/injection.dart` is the composition root. `main.dart` calls `configureDependencies()` before `runApp`, then starts `SessionCubit` and `CartCubit`.
 
-The domain layer exists only in Checkout (`lib/features/checkout/domain`) because that feature contains real business rules: money, coupons, membership, VAT, shipping, and the minimum order. Other features have no domain folder.
+GetIt registers the contracts feature code depends on:
 
-## Dependency Injection
+| Contract | Implementation |
+| --- | --- |
+| `AuthApi` | `DioAuthApi` |
+| `ProductsApi` | `DioProductsApi` |
+| `CouponApi` | `DioCouponApi` |
+| `CheckoutApi` | `DioCheckoutApi` |
+| `ProfileApi` | `DioProfileApi` |
+| `TokenStorage` | `SecureTokenStorage` |
+| `KeyValueStore` | `PreferencesKeyValueStore` |
+| `UnauthorizedNotifier` | `UnauthorizedNotifier` |
 
-`lib/core/di/injection.dart` is the composition root. `configureDependencies()` builds the object graph once at startup, and `main.dart` calls it before `runApp`.
+`AuthRepository`, `CartRepository`, `CalculateCheckout`, `CheckoutPolicy.standard`, `SessionCubit`, `CartCubit`, and `GoRouter` are registered there as well. `LoginCubit`, `ProductsCubit`, `CheckoutCubit`, and `ProfileCubit` are factories. `ProductDetailsCubit` is a factory that receives the product id.
 
-GetIt registers the contracts feature code is allowed to see:
+`Dio`, `SharedPreferences`, and `FlutterSecureStorage` are created inside the composition root and are not registered. Feature code receives a contract. The Dio client in `lib/core/network/dio_client.dart` stays behind the `Dio*Api` classes. That client uses a 15-second connect timeout and a 15-second receive timeout, and it attaches `AuthInterceptor`.
 
-- `AuthApi` — `DioAuthApi`
-- `ProductsApi` — `DioProductsApi`
-- `CouponApi` — `DioCouponApi`
-- `CheckoutApi` — `DioCheckoutApi`
-- `ProfileApi` — `DioProfileApi`
-- `TokenStorage` — `SecureTokenStorage`
-- `KeyValueStore` — `PreferencesKeyValueStore`
+`CheckoutCubit` is created from the current `SessionCubit` state. It stores that user's id and `membershipBasisPoints` for the visit. A missing user uses `0` membership basis points.
 
-`AuthRepository`, `CartRepository`, `CalculateCheckout`, `CheckoutPolicy.standard`, `SessionBloc`, `CartBloc`, and `GoRouter` are registered there as well. `LoginBloc`, `ProductsBloc`, `ProductDetailsBloc`, `CheckoutBloc`, and `ProfileBloc` are factories so each visit gets a fresh instance.
+## Dependency inversion
 
-Raw `Dio`, `SharedPreferences`, and `FlutterSecureStorage` are created inside the composition root and are not registered. Feature code cannot ask GetIt for them. It receives the contract, and the Dio client in `lib/core/network/dio_client.dart` stays behind the `Dio*Api` classes.
+Feature Cubits and repositories depend on abstract types:
 
-## Repository Decisions
+- `AuthApi`, `ProductsApi`, `CouponApi`, `CheckoutApi`, `ProfileApi`
+- `TokenStorage`, `KeyValueStore`
 
-`AuthRepository` exists because login is two steps that must stay together: `AuthApi.login` returns a session, and `TokenStorage` must store that token. The same type reads and clears the saved token for session restore and sign-out.
+`DioAuthApi`, `DioProductsApi`, `DioCouponApi`, `DioCheckoutApi`, `DioProfileApi`, `SecureTokenStorage`, and `PreferencesKeyValueStore` are the implementations. `SecureTokenStorage` keeps the auth token under the key `auth_token`. `PreferencesKeyValueStore` stores strings in `SharedPreferences`.
 
-`CartRepository` exists because the cart is local state with its own rules. It maps the current owner to `cart_guest` or `cart_user_{userId}`, encodes the cart as JSON, drops a cart that cannot be decoded, merges a guest cart into a user cart on sign-in, and publishes updates when the stored cart changes.
+HTTP paths used by the Dio implementations:
 
-Products, product details, profile, coupon validation, and placing an order are single remote calls. Their Blocs depend on `ProductsApi`, `ProfileApi`, `CouponApi`, or `CheckoutApi`. A repository around any of those calls would only forward one method, so none was added.
+- `POST /auth/login`
+- `GET /products`
+- `GET /products/{id}`
+- `POST /coupons/validate`
+- `POST /orders`
+- `GET /me`
 
-## Checkout
+`runRequest` turns transport and JSON failures into `AppFailure`. `mapDioException` maps status `401` to `unauthorized`, `404` to `notFound`, `400` and `422` to `validation`, timeouts and connection errors to `network`, and anything else to `unknown`.
 
-`CalculateCheckout` builds a `CheckoutQuote` in this order:
+## Repository decisions
+
+A repository exists only when one type must keep two data steps together.
+
+`AuthRepository` pairs `AuthApi.login` with `TokenStorage`. Login returns a session, and the repository writes `session.token` before it returns the user. The same type reads and clears the saved token for session restore and sign-out.
+
+`CartRepository` owns local cart storage. It chooses `cart_guest` or `cart_user_{userId}`, encodes the cart as JSON, deletes a cart that cannot be decoded, merges a guest cart into a user cart, and publishes `updates` when the stored cart changes. An empty cart with no coupon deletes that owner's key instead of writing an empty document.
+
+Products, product details, profile, coupon validation, and placing an order are one remote call each. Their Cubits depend on `ProductsApi`, `ProfileApi`, `CouponApi`, or `CheckoutApi`. Those calls have no second store to coordinate, so they have no repository.
+
+## Checkout domain
+
+Checkout is the only feature with a domain layer (`lib/features/checkout/domain`).
+
+`CalculateCheckout` is a pure Dart use case. Its `call` method builds a `CheckoutQuote` from `CheckoutLine` values, `CheckoutPolicy`, an optional `Coupon`, and `membershipBasisPoints`. It does not use Flutter, Dio, or storage.
+
+`CheckoutPolicy.standard` is:
+
+- minimum order: `5000` minor units
+- VAT: `1400` basis points (14%)
+- flat shipping: `1500` minor units
+- free-shipping threshold: `20000` minor units
+
+A line with a negative price or a quantity below 1 throws `ArgumentError`. An empty line list returns `CheckoutQuote.empty`, which cannot be placed.
+
+Calculation order:
 
 1. **Merchandise total.** Sum of each line's price in minor units multiplied by quantity.
-2. **Minimum order check.** The merchandise total is compared with `CheckoutPolicy.minimumOrder`. `canPlaceOrder` follows that check. A later coupon does not change it.
-3. **Coupon.** A percent coupon or a fixed coupon is applied to the merchandise total. A missing or non-positive coupon discounts nothing. The discount is clamped so it cannot exceed the merchandise total.
-4. **Membership discount.** The signed-in user's `membershipBasisPoints` is applied to the post-coupon amount.
+2. **Minimum order.** `meetsMinimum` is true when merchandise is greater than or equal to `CheckoutPolicy.minimumOrder`. `canPlaceOrder` follows that check. A later coupon does not change it.
+3. **Coupon.** A `PercentCoupon` or `FixedCoupon` is applied to the merchandise total. A missing coupon, or a coupon whose raw discount is not positive, discounts nothing. `percentOfMinor` treats basis points above `10000` as `10000`. A discount larger than merchandise is clamped to merchandise.
+4. **Membership discount.** `membershipBasisPoints` is applied to the post-coupon amount. Zero or negative basis points discount nothing.
 5. **VAT.** `CheckoutPolicy.vatBasisPoints` is applied to the taxable amount left after coupon and membership.
-6. **Shipping.** The quote uses `CheckoutPolicy.flatShipping` when the free-shipping rule does not apply. A negative flat amount is treated as zero.
-7. **Free shipping threshold.** Shipping is zero when the merchandise total is greater than or equal to `CheckoutPolicy.freeShippingThreshold`.
+6. **Shipping.** Shipping is `0` when merchandise is greater than or equal to `CheckoutPolicy.freeShippingThreshold`. Otherwise it is the flat amount, and a negative flat amount is treated as `0`.
+7. **Total.** Taxable amount plus VAT plus shipping.
 
 Free shipping uses the pre-discount merchandise total. A coupon that lowers the goods total does not bring shipping back.
 
-The standard policy in `CheckoutPolicy.standard` is a 5000 minor-unit minimum, 1400 basis points of VAT (14%), 1500 minor units of flat shipping, and a 20000 minor-unit free-shipping threshold.
+Money is an integer minor unit (`Money.minor`). `percentOfMinor` rounds half up with `(amountMinor * rate + 5000) ~/ 10000`. `formatMinorUnits` displays that integer as a major unit with two fraction digits (`1999` is shown as `19.99`). Product, cart, quote, and order amounts use the same minor-unit integers.
 
-Money uses integer minor units instead of `double`. Percentages use basis points, and `percentOfMinor` rounds half up.
-
-```text
-$19.99 → 1999
-```
-
-## Checkout Flow
+Checkout flow:
 
 ```text
-Checkout Page
-→ CheckoutBloc
+CheckoutPage
+→ load
+→ CartRepository.read for the current owner
+→ CouponApi.validate when a code is stored
 → CalculateCheckout
-→ Checkout Quote
-→ Checkout API
-→ Clear correct user's cart
-→ Order Confirmation
+→ CheckoutReady
+→ submit
+→ CheckoutApi.placeOrder
+→ empty cart for that owner only
+→ CheckoutSuccess
+→ /checkout/confirmation
 ```
 
-`CheckoutPage` dispatches `CheckoutRequested`. `CheckoutBloc` reads the current owner's cart, asks `CouponApi` to validate a saved code when one is present, and calls `CalculateCheckout` with the lines, policy, coupon, and membership rate. An invalid coupon is left off the quote, and the quote is still shown in `CheckoutReady`.
+An invalid coupon is left off the quote. The quote is still shown, with `couponMessage` set and `appliedCouponCode` unset. Submit runs only from `CheckoutReady` or `CheckoutSubmitFailure`, and only when `canPlaceOrder` is true. `placeOrder` sends line product ids, quantities, and the applied coupon code. After a successful response, the Cubit writes `Cart.empty` for `ownerId` only, then emits `CheckoutSuccess`. The page opens `/checkout/confirmation` with a `PlacedOrder` extra.
 
-On submit, `CheckoutApi.placeOrder` sends the lines and applied coupon code. After a successful response, the Bloc writes an empty cart for `ownerId` only, then emits `CheckoutSuccess`. The page opens `/checkout/confirmation` with the placed order.
+## Cart ownership
 
-`CalculateCheckout` is pure Dart. It depends only on checkout domain types. It has no Flutter, Dio, or storage dependency, so the pricing rules can run in a plain Dart test.
+`CartRepository` stores one cart per owner:
 
-## Cart Ownership
+- `cart_guest` when there is no user id
+- `cart_user_{userId}` for that user
 
-The cart is stored per owner:
+A guest edits `cart_guest`. When `SessionCubit` emits `SessionAuthenticated` with `signedInNow` and a user, `CartCubit` calls `mergeGuestIntoUser`. Quantities for the same product id are added onto the user line. The coupon is the user code when one is stored, otherwise the guest code. The guest key is then cleared.
 
-- `cart_guest` — no signed-in user id
-- `cart_user_{userId}` — the cart for that user
+After a successful order, only the current owner's key is removed. Another user's `cart_user_{userId}` entry is left as it is.
 
-A guest browses and edits `cart_guest`. When that guest signs in, `CartRepository.mergeGuestIntoUser` adds guest quantities into `cart_user_{userId}`, keeps the user coupon when one is already stored, and then clears `cart_guest`.
+## Navigation and authentication
 
-After a successful order, `CheckoutBloc` clears only the current owner's cart by writing an empty cart with that `userId`. Another user's `cart_user_{userId}` entry is left as it is.
+Routes are declared in `lib/core/router/app_router.dart` with go_router. The router refreshes from `SessionCubit.stream`.
 
-## Navigation & Authentication
+| Route | Access |
+| --- | --- |
+| `/` | Splash while `SessionLoading`; otherwise redirect to `/products` |
+| `/products`, `/products/:id`, `/cart` | Guest and signed-in |
+| `/login` | Signed-out. A signed-in visit returns to a safe `from` path, or to `/products` |
+| `/checkout`, `/checkout/confirmation`, `/profile` | Signed-in |
 
-Routes are declared in `lib/core/router/app_router.dart` with go_router.
+A signed-out visit to a protected route goes to `/login?from=...`. `from` is kept only when it starts with a single `/` and does not start with `/login`.
 
-- Guests can browse Products (`/products`), Product Details (`/products/:id`), and Cart (`/cart`).
-- Checkout (`/checkout`), order confirmation (`/checkout/confirmation`), and Profile (`/profile`) require authentication.
-- Authentication redirects are handled by go_router. A signed-out visit to a protected route goes to `/login`, and the previous location is kept in the `from` query when it is a safe in-app path. A signed-in visit to `/login` returns to that path, or to `/products`.
-- While `SessionBloc` is loading, go_router sends the app to `/`, which shows the splash page. After the session resolves, `/` continues to `/products`.
+While `SessionCubit` is `SessionLoading`, every location other than `/` is sent to `/`. After the session resolves, `/` continues to `/products`.
 
-401 handling clears the session without coupling Dio directly to `SessionBloc`. `AuthInterceptor` reads the token, attaches `Authorization: Bearer`, and on an unauthorized response other than login it clears `TokenStorage` and calls `UnauthorizedNotifier`. `SessionBloc` listens to that notifier and emits `SessionUnauthenticated`. The interceptor does not reference the Bloc.
+Sign-out emits `SessionUnauthenticated` with `signedOut: true`. The redirect then sends the app to `/products`.
 
-## UI States
+Session restore reads the token through `AuthRepository`. A missing token stays signed out. A stored token loads `ProfileApi.me()`. `unauthorized` from that call stays signed out. Any other `AppFailure` still emits `SessionAuthenticated` with `user: null` and the failure message. `ProductsPage` shows that message, or a token-read failure message, once in a snack bar.
 
-Screens render the state their Bloc emits, using `LoadingView`, `ErrorView`, and `EmptyView` where that state exists.
+### 401 and session handling
 
-- **Products:** loading, error, empty, ready.
-- **Product details:** loading, error, not available, ready.
-- **Cart:** loading, error, empty, ready.
-- **Checkout:** loading, empty cart, error, ready quote, submitting, submit error, success.
-- **Profile:** loading, error, ready.
-- **Login:** idle, submitting, error, success.
-- **Order confirmation:** the placed order, or an error when the confirmation extra is missing.
+`AuthInterceptor` reads `TokenStorage` and sets `Authorization: Bearer` when a token is present. On `AppFailureKind.unauthorized`, it clears the token and calls `UnauthorizedNotifier`, except when the path ends with `/auth/login`.
+
+`SessionCubit` listens to `UnauthorizedNotifier` and calls `expire()`, which emits `SessionUnauthenticated` without `signedOut`. The interceptor does not reference the Cubit. A protected screen then redirects to login. A guest screen stays where it is.
+
+`DioAuthApi` maps a login `401` to a validation failure (`Incorrect email or password.`) so a bad password does not clear a session.
+
+## UI states
+
+Screens render the state their Cubit emits. `LoadingView`, `ErrorView`, and `EmptyView` are the shared loading, error, and empty widgets.
+
+| Screen | States |
+| --- | --- |
+| Products | `ProductsLoading`, `ProductsFailure`, `ProductsEmpty`, `ProductsReady` |
+| Product details | `ProductDetailsLoading`, `ProductDetailsFailure`, `ProductDetailsNotFound` (`EmptyView`: "This product is not available."), `ProductDetailsReady` |
+| Cart | `CartLoading`, `CartFailure`, `CartEmpty`, `CartReady` |
+| Checkout | `CheckoutLoading`, `CheckoutEmptyCart`, `CheckoutFailure`, `CheckoutReady`, `CheckoutSubmitting`, `CheckoutSubmitFailure`, `CheckoutSuccess` |
+| Profile | `ProfileLoading`, `ProfileFailure`, `ProfileReady` |
+| Login | `LoginIdle`, `LoginSubmitting`, `LoginFailure`, `LoginSuccess` |
+| Order confirmation | The placed order, or `ErrorView` when the route extra is missing |
+
+`CheckoutSuccess` shows `LoadingView` while the listener navigates to confirmation. `LoginSuccess` signs the session in; the login form itself shows the idle form, a progress indicator while submitting, and the failure message on error.
 
 ## Testing
 
-`CalculateCheckout` is tested with pure Dart tests in `test/features/checkout/calculate_checkout_test.dart`. `CheckoutBloc` is tested with fakes in `test/features/checkout/checkout_bloc_test.dart`.
+Tests live next to the feature they cover. They construct the type under test with fakes or an in-memory `KeyValueStore`. There is no widget test suite. All 71 tests pass.
 
-Those tests cover checkout calculations, coupons, membership, VAT, shipping, rounding, minimum order, cart clearing, and edge cases. Further tests cover `AuthRepository`, `CartRepository`, and `ProductsBloc`.
+| File | What it exercises |
+| --- | --- |
+| `test/features/checkout/calculate_checkout_test.dart` | Merchandise totals, minimum order, coupons, membership, VAT, shipping, half-up rounding, and invalid lines. `CalculateCheckout` is called directly. |
+| `test/features/checkout/checkout_cubit_test.dart` | An unknown coupon left off the quote, and a placed order that clears only that user's cart. |
+| `test/features/products/products_bloc_test.dart` | An empty catalog and an `AppFailure` message from `ProductsApi`. |
+| `test/features/cart/cart_repository_test.dart` | Guest quantities merged into the user cart, and a cart that cannot be decoded. |
+| `test/features/auth/auth_repository_test.dart` | Login storing the token and returning the user. |
 
-The tests pass.
+## Architecture diagram
 
-## Architecture Trade-offs
+```mermaid
+flowchart TB
+  subgraph viewLayer [View]
+    Pages["Feature pages"]
+  end
 
-| Decision | Chosen | Why | Trade-off |
+  subgraph viewModel [ViewModel]
+    ScreenCubits["Login, Products, ProductDetails, Checkout, Profile Cubits"]
+    SessionCubit["SessionCubit"]
+    CartCubit["CartCubit"]
+  end
+
+  subgraph domainLayer [Checkout domain]
+    CalculateCheckout["CalculateCheckout"]
+  end
+
+  subgraph dataLayer [Data]
+    AuthRepository["AuthRepository"]
+    CartRepository["CartRepository"]
+    ApiContracts["AuthApi, ProductsApi, CouponApi, CheckoutApi, ProfileApi"]
+  end
+
+  subgraph implementations [Implementations]
+    DioApis["Dio API classes"]
+    SecureTokenStorage["SecureTokenStorage"]
+    Preferences["PreferencesKeyValueStore"]
+  end
+
+  GetIt["GetIt composition root"] --> viewModel
+  GetIt --> dataLayer
+  GetIt --> CalculateCheckout
+  GetIt --> implementations
+
+  Pages -->|"methods"| ScreenCubits
+  ScreenCubits -->|"state"| Pages
+  SessionCubit --> AuthRepository
+  SessionCubit --> ApiContracts
+  CartCubit --> CartRepository
+  ScreenCubits --> ApiContracts
+  CheckoutCubit["CheckoutCubit"] --> CalculateCheckout
+  CheckoutCubit --> CartRepository
+
+  AuthRepository --> ApiContracts
+  AuthRepository --> SecureTokenStorage
+  CartRepository --> Preferences
+  ApiContracts --> DioApis
+
+  AuthInterceptor["AuthInterceptor"] --> SecureTokenStorage
+  AuthInterceptor --> UnauthorizedNotifier["UnauthorizedNotifier"]
+  UnauthorizedNotifier --> SessionCubit
+  DioApis --> AuthInterceptor
+```
+
+## Architecture trade-offs
+
+| Decision | What the code does | Why it is shaped this way | Trade-off |
 | --- | --- | --- | --- |
-| MVVM + Repository | Views, Blocs, and repositories for auth and cart | Screens stay free of HTTP and pricing rules, and auth and cart have real coordination to hide | Repository use is uneven, because most features call an API contract directly |
-| Bloc as ViewModel | `flutter_bloc` | Each screen has an explicit event and a single state for the view to render | Every interaction adds an event and a state type |
-| Use case only for Checkout | `CalculateCheckout` | Pricing rules are pure and need their own tests | Checkout is structured differently from catalog and profile |
-| GetIt | Manual registration in `injection.dart` | One place wires contracts to implementations | The graph is a service locator, and new types must be registered by hand |
-| Dio | One client behind `Dio*Api` classes | Timeouts, JSON, and the auth interceptor live in one client | Call sites depend on the mapped `AppFailure` behavior of that client |
-| Secure token storage | `FlutterSecureStorage` behind `TokenStorage` | The auth token is kept out of the cart preferences | The app depends on platform secure storage |
-| SharedPreferences for cart | `PreferencesKeyValueStore` | The cart is a small JSON document, addressed by owner key | The cart is on one device and is cleared only for the owner key that is written |
-| go_router | `buildRouter` plus a session refresh stream | Guest and signed-in access is decided in one redirect | Redirect behavior is concentrated in the router |
-| Feature-first organization | `lib/features/<feature>` | Each feature keeps its view, Bloc, data, and model together | Product details shares the products feature, and session and cart Blocs are app-wide singletons |
+| MVVM + Repository | Views, Cubits, and repositories for auth and cart | Screens call methods and render state. Auth and cart each coordinate two data concerns. | Most features call an API contract directly, so the data layer is not uniform. |
+| Cubit as ViewModel | `flutter_bloc` Cubit and state types per screen | The view has one state object to render. | Each interaction is a method on the Cubit. |
+| Use case only for checkout | `CalculateCheckout` | Pricing rules are pure Dart and are tested without Flutter or Dio. | Checkout is structured differently from catalog and profile. |
+| GetIt | Manual registration in `injection.dart` | One place wires contracts to implementations. `Dio` and the storage plugins stay unregistered. | New types must be registered by hand. |
+| Dio | One client behind `Dio*Api` | Timeouts, JSON, and the auth interceptor live in one client. Call sites see `AppFailure`. | Error text and status mapping are fixed in `mapDioException`. |
+| Secure token storage | `FlutterSecureStorage` behind `TokenStorage` | The auth token is not stored with the cart preferences. | The app depends on platform secure storage. |
+| SharedPreferences for the cart | `PreferencesKeyValueStore` | The cart is a JSON document addressed by owner key. | The cart stays on one device. Clearing an order deletes only that owner key. |
+| go_router | `buildRouter` plus the session stream | Guest and signed-in access is decided in one redirect. | Redirect rules are concentrated in the router. |
+| Feature-first folders | `lib/features/<feature>` | Each feature keeps its presentation and data together. Checkout also keeps `domain/`. | Product details is its own feature and has presentation only. `SessionCubit` and `CartCubit` are app-wide singletons. |
 
-## Intentionally Not Abstracted
+## Intentionally not abstracted
 
-Products, product details, profile, coupon lookup, and order placement call their API contracts from the Bloc. They do not have a repository or a use case.
+These Cubits call an API contract directly. They have no repository and no use case:
 
-Those features currently perform one remote read or write and hold no extra business rule. An extra layer would not change the data, the error mapping, or the tests. Checkout keeps `CalculateCheckout` because the quote rules are that extra problem. Auth and cart keep repositories because token persistence and owner-specific cart storage are that extra problem.
+- `ProductsCubit` and `ProductDetailsCubit` use `ProductsApi`
+- `ProfileCubit` uses `ProfileApi`
+- `CheckoutCubit` uses `CouponApi` and `CheckoutApi` for the remote calls
+
+Each of those calls is one read or write. Checkout still uses `CalculateCheckout` for the quote, and `CartRepository` for the local cart. Auth and cart keep repositories because token persistence and owner-specific cart storage are separate from the HTTP call.
